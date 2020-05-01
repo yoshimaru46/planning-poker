@@ -1,11 +1,6 @@
-import React from 'react';
+import React from "react";
 
-import {
-  BrowserRouter as Router,
-  Switch,
-  Route,
-  Link
-} from "react-router-dom";
+import { BrowserRouter as Router, Switch, Route, Link } from "react-router-dom";
 
 import Home from "./Home";
 
@@ -50,7 +45,6 @@ function App() {
   );
 }
 
-
 function About() {
   return (
     <div>
@@ -66,6 +60,5 @@ function Dashboard() {
     </div>
   );
 }
-
 
 export default App;
