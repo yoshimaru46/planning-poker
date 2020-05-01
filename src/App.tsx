@@ -7,6 +7,8 @@ import {
   Link
 } from "react-router-dom";
 
+import Home from "./Home";
+
 function App() {
   return (
     <Router>
@@ -48,14 +50,6 @@ function App() {
   );
 }
 
-
-function Home() {
-  return (
-    <div>
-      <h2>Home</h2>
-    </div>
-  );
-}
 
 function About() {
   return (
