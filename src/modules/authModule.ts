@@ -2,7 +2,7 @@ import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { UserInfo } from "firebase";
 
 interface Auth {
-  user: Pick<UserInfo, "displayName" | "photoURL"> | null;
+  user: Pick<UserInfo, "displayName" | "photoURL" | "uid"> | null;
 }
 
 type State = {
@@ -17,13 +17,17 @@ const authModule = createSlice({
   name: "auth",
   initialState,
   reducers: {
-    login(state: State, action: PayloadAction<UserInfo>) {
-      const { displayName, photoURL } = action.payload;
+    login(
+      state: State,
+      action: PayloadAction<Pick<UserInfo, "displayName" | "photoURL" | "uid">>
+    ) {
+      const { displayName, photoURL, uid } = action.payload;
 
       state.auth = {
         user: {
           displayName,
           photoURL,
+          uid,
         },
       };
     },
