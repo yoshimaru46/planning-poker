@@ -108,7 +108,7 @@ const Home: React.FC = () => {
       <div className="w-1/2 shadow-2xl">
         <img
           className="object-cover w-full h-screen hidden md:block"
-          src={`${process.env.PUBLIC_URL}/img/home-bg.jpg`}
+          src={`${process.env.PUBLIC_URL}/img/home-bg.png`}
         />
       </div>
     </div>
