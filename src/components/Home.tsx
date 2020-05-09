@@ -1,60 +1,14 @@
-import React from "react";
-import { useDispatch, useSelector } from "react-redux";
-import firebase from "./../Firebase";
+import React, { useContext } from "react";
 
-import { RootState } from "../rootReducer";
-
-import { login, logout } from "../modules/authModule";
 import { useHistory } from "react-router-dom";
+import { UserContext } from "./UserContext";
+import { loginWithGithub } from "../firebase/loginWithGithub";
+import { logoutWithGithub } from "../firebase/logoutWithGithub";
 
 const Home: React.FC = () => {
-  const dispatch = useDispatch();
-  const { auth } = useSelector((state: RootState) => state.auth);
-
   const history = useHistory();
 
-  const loginWithGithub = () => {
-    const provider = new firebase.auth.GithubAuthProvider();
-
-    firebase
-      .auth()
-      .signInWithPopup(provider)
-      // @ts-ignore
-      .then((result) => {
-        const user = result.user;
-
-        if (user) {
-          dispatch(
-            login({
-              photoURL: user.photoURL,
-              uid: user.uid,
-              displayName: result.additionalUserInfo?.username || "",
-            })
-          );
-        }
-      })
-      .catch((error: any) => {
-        console.error(error);
-      });
-  };
-
-  // @ts-ignore
-  const logoutWithGithub = (e) => {
-    e.preventDefault();
-
-    firebase
-      .auth()
-      .signOut()
-      .then(() => {
-        // Logout successful.
-        dispatch(logout());
-      })
-      .catch((error: any) => {
-        console.error(error);
-      });
-  };
-
-  const user = auth?.user;
+  const user = useContext(UserContext);
 
   return (
     <div className="w-full flex flex-wrap">

@@ -1,4 +1,4 @@
-import React, { ReactChild, ReactChildren } from "react";
+import React, { ReactChild, useContext } from "react";
 
 import {
   BrowserRouter as Router,
@@ -10,8 +10,7 @@ import {
 import Home from "./Home";
 import CreateRoom from "./CreateRoom";
 import Room from "./Room";
-import { useSelector } from "react-redux";
-import { RootState } from "../rootReducer";
+import { UserContext } from "./UserContext";
 
 type Props = {
   children: ReactChild;
@@ -19,8 +18,7 @@ type Props = {
 };
 
 const PrivateRoute = ({ children, path }: Props) => {
-  const { auth } = useSelector((state: RootState) => state.auth);
-  const user = auth?.user;
+  const user = useContext(UserContext);
 
   return (
     <Route

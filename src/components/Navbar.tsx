@@ -1,31 +1,10 @@
-import React from "react";
+import React, { useContext } from "react";
 
-import { useDispatch, useSelector } from "react-redux";
-import { RootState } from "../rootReducer";
-import firebase from "../Firebase";
-import { logout } from "../modules/authModule";
+import { UserContext } from "./UserContext";
+import { logoutWithGithub } from "../firebase/logoutWithGithub";
 
 const Navbar: React.FC = () => {
-  const dispatch = useDispatch();
-
-  const { auth } = useSelector((state: RootState) => state.auth);
-  const user = auth?.user;
-
-  // @ts-ignore
-  const logoutWithGithub = (e) => {
-    e.preventDefault();
-
-    firebase
-      .auth()
-      .signOut()
-      .then(() => {
-        // Logout successful.
-        dispatch(logout());
-      })
-      .catch((error: any) => {
-        console.error(error);
-      });
-  };
+  const user = useContext(UserContext);
 
   return (
     <nav className="font-sans flex flex-col text-center sm:flex-row sm:text-left sm:justify-between py-4 px-6 bg-black shadow w-full">

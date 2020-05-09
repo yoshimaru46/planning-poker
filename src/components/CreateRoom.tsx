@@ -1,14 +1,12 @@
-import React, { useState } from "react";
+import React, { useContext, useState } from "react";
 
 import { db } from "../Firebase";
 import { useHistory } from "react-router-dom";
-import { useSelector } from "react-redux";
-import { RootState } from "../rootReducer";
 import Navbar from "./Navbar";
+import { UserContext } from "./UserContext";
 
 const CreateRoom: React.FC = () => {
-  const { auth } = useSelector((state: RootState) => state.auth);
-  const user = auth?.user;
+  const user = useContext(UserContext);
 
   const history = useHistory();
 
@@ -17,7 +15,8 @@ const CreateRoom: React.FC = () => {
 
   const createRoom = () => {
     if (!user) {
-      throw "user is undefined!";
+      console.error("user is undefined!");
+      return;
     }
 
     db.collection("rooms")
@@ -39,7 +38,7 @@ const CreateRoom: React.FC = () => {
       if (doc.exists) {
         history.push(`/rooms/${roomId}`);
       } else {
-        setError("No such document!");
+        setError("Room does not exists. Please enter another Room ID.");
       }
     });
   };
@@ -75,9 +74,7 @@ const CreateRoom: React.FC = () => {
                   onChange={(e) => setRoomId(e.target.value)}
                 />
                 {error && (
-                  <p className="text-red-500 text-xs italic">
-                    Room does not exists. Please enter another Room ID.
-                  </p>
+                  <p className="text-red-500 text-xs italic">{error}</p>
                 )}
               </div>
 

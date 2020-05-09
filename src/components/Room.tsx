@@ -1,8 +1,6 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useContext, useEffect, useRef, useState } from "react";
 
 import { db } from "../Firebase";
-import { useSelector } from "react-redux";
-import { RootState } from "../rootReducer";
 import { useLocation } from "react-router-dom";
 
 import { DndProvider, useDrag, useDrop } from "react-dnd";
@@ -11,6 +9,7 @@ import HTML5Backend from "react-dnd-html5-backend";
 import Navbar from "./Navbar";
 import RoomMembers from "./RoomMembers";
 import Card from "./Card";
+import { UserContext } from "./UserContext";
 
 export interface JoinRoomHistory {
   roomId: string;
@@ -31,8 +30,7 @@ interface SelectedCardHistories {
 const STORY_POINTS = [0.5, 1, 2, 3, 5, 8];
 
 const Room: React.FC = () => {
-  const { auth } = useSelector((state: RootState) => state.auth);
-  const user = auth?.user;
+  const user = useContext(UserContext);
 
   const [joinRoomHistories, setJoinRoomHistories] = useState<JoinRoomHistory[]>(
     []
@@ -41,7 +39,7 @@ const Room: React.FC = () => {
     SelectedCardHistories[]
   >([]);
 
-  const isHideAllCards = selectedCardHistories.every((h) => h.hide === true);
+  const isHideAllCards = selectedCardHistories.every((h) => h.hide);
 
   const location = useLocation();
   const roomId = location.pathname.split("/")[2];
@@ -55,7 +53,8 @@ const Room: React.FC = () => {
 
   const createJoinRoomHistories = async () => {
     if (!user) {
-      throw "user is undefined!";
+      console.error("user is undefined!");
+      return;
     }
 
     const querySnapshot = await db
@@ -76,7 +75,8 @@ const Room: React.FC = () => {
 
   const deleteJoinRoomHistories = async () => {
     if (!user) {
-      throw "user is undefined!";
+      console.error("user is undefined!");
+      return;
     }
 
     const query = await db
@@ -112,7 +112,8 @@ const Room: React.FC = () => {
 
   const addSelectCardHistory = async ({ id }: { type: string; id: number }) => {
     if (!user) {
-      throw "user is undefined!";
+      console.error("user is undefined!");
+      return;
     }
 
     const query = await db
