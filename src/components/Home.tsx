@@ -14,7 +14,7 @@ const Home: React.FC = () => {
     <div className="w-full flex flex-wrap">
       <div className="w-full md:w-1/2 flex flex-col">
         <div className="flex justify-center md:justify-start pt-12 md:pl-12 md:-mb-24">
-          <a href="#" className="bg-black text-white font-bold text-2xl p-4">
+          <a href="/" className="bg-black text-white font-bold text-2xl p-4">
             Planning Poker
           </a>
         </div>
@@ -62,6 +62,7 @@ const Home: React.FC = () => {
       <div className="w-1/2 shadow-2xl">
         <img
           className="object-cover w-full h-screen hidden md:block"
+          alt="home-bg"
           src={`${process.env.PUBLIC_URL}/img/home-bg.png`}
         />
       </div>
