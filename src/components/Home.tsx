@@ -42,7 +42,7 @@ const Home: React.FC = () => {
                   className="bg-black hover:bg-gray-700 text-white font-bold py-2 px-4 rounded text-xl"
                   onClick={() => history.push("/create-room")}
                 >
-                  Create or Join room
+                  Join or Create a room
                 </button>
               </div>
 
