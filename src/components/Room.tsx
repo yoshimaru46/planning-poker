@@ -165,6 +165,7 @@ const Room: React.FC = () => {
   const getSelectCardHistories = () => {
     db.collection("select_card_histories")
       .where("room_id", "==", roomId)
+      .orderBy("story_point")
       .onSnapshot((querySnapshot) => {
         const histories: SelectedCardHistories[] = [];
         querySnapshot.forEach((doc) => {
@@ -179,16 +180,6 @@ const Room: React.FC = () => {
             createdAt: data.created_at,
             hide: data.hide,
           });
-        });
-
-        histories.sort((a, b) => {
-          if (a.storyPoint < b.storyPoint) {
-            return -1;
-          }
-          if (a.storyPoint > b.storyPoint) {
-            return 1;
-          }
-          return 0;
         });
 
         setSelectedCardHistories(histories);
