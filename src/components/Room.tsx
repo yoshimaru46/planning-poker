@@ -209,7 +209,7 @@ const Room: React.FC = () => {
     return (
       <div
         className="flex content-around flex-wrap bg-gray-200"
-        style={{ height: "18rem" }}
+        style={{ height: "30vh" }}
         ref={ref}
       >
         {" "}
@@ -252,7 +252,7 @@ const Room: React.FC = () => {
     <div>
       <Navbar />
 
-      <div className="flex">
+      <div className="flex" style={{ height: "calc(100vh - 6rem)" }}>
         <div className="w-3/4 bg-white">
           <section>
             <p className="bg-gray-800 text-white font-bold text-xl p-4">

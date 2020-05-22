@@ -13,6 +13,7 @@
     "@types/react-dom": "^16.9.0",
     "autoprefixer": "^9.7.6",
     "firebase": "^7.14.2",
+    "lodash-es": "^4.17.15",
     "postcss-cli": "^7.1.1",
     "react": "^16.13.1",
     "react-dnd": "^10.0.2",
@@ -20,6 +21,7 @@
     "react-dom": "^16.13.1",
     "react-router-dom": "^5.1.2",
     "react-scripts": "3.4.1",
+    "react-spinners": "^0.8.3",
     "react-toastify": "^6.0.0-rc.2-1",
     "typescript": "~3.7.2"
   },
@@ -48,6 +50,7 @@
     ]
   },
   "devDependencies": {
+    "@types/lodash-es": "^4.17.3",
     "@types/react-redux": "^7.1.7",
     "@types/react-router-dom": "^5.1.5",
     "cssnano": "^4.1.10",
