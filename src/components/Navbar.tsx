@@ -14,24 +14,26 @@ const Navbar: React.FC = () => {
         </a>
       </div>
 
-      <div className="flex items-center">
-        <div className="w-10 h-10 rounded-full overflow-hidden shadow-inner table">
-          <img
-            src={user?.photoURL || ""}
-            alt="Avatar"
-            className="object-cover object-center w-full h-full"
-          />
+      {user && (
+        <div className="flex items-center">
+          <div className="w-10 h-10 rounded-full overflow-hidden shadow-inner table">
+            <img
+              src={user?.photoURL || ""}
+              alt="Avatar"
+              className="object-cover object-center w-full h-full"
+            />
+          </div>
+          <div className="ml-2 flex justify-center items-center text-gray-700">
+            <a
+              href="/"
+              className="text-lg no-underline text-white ml-2"
+              onClick={logoutWithGithub}
+            >
+              Logout
+            </a>
+          </div>
         </div>
-        <div className="ml-2 flex justify-center items-center text-gray-700">
-          <a
-            href="/"
-            className="text-lg no-underline text-white ml-2"
-            onClick={logoutWithGithub}
-          >
-            Logout
-          </a>
-        </div>
-      </div>
+      )}
     </nav>
   );
 };

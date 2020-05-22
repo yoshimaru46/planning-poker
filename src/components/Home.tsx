@@ -1,9 +1,14 @@
 import React, { useContext } from "react";
 
+import { isNull, isUndefined } from "lodash-es";
+
 import { useHistory } from "react-router-dom";
+
 import { UserContext } from "./UserContext";
+
 import { loginWithGithub } from "../firebase/loginWithGithub";
 import { logoutWithGithub } from "../firebase/logoutWithGithub";
+import Loader from "./Loader";
 
 const Home: React.FC = () => {
   const history = useHistory();
@@ -20,7 +25,9 @@ const Home: React.FC = () => {
         </div>
 
         <div className="flex flex-col justify-center md:justify-start my-auto pt-8 md:pt-0 px-8 md:px-24 lg:px-32">
-          {!user && (
+          {isUndefined(user) && <Loader />}
+
+          {isNull(user) && (
             <>
               <p className="text-center text-3xl">Welcome.</p>
               <div className="text-center pt-12 pb-12">

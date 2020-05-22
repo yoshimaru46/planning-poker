@@ -1,5 +1,7 @@
 import React, { ReactChild, useContext } from "react";
 
+import { isUndefined } from "lodash-es";
+
 import {
   BrowserRouter as Router,
   Switch,
@@ -11,14 +13,27 @@ import Home from "./Home";
 import CreateRoom from "./CreateRoom";
 import Room from "./Room";
 import { UserContext } from "./UserContext";
+import Loader from "./Loader";
+import Navbar from "./Navbar";
 
 type Props = {
   children: ReactChild;
   path: string;
 };
 
-const PrivateRoute = ({ children, path }: Props) => {
+const PrivateRoute = ({ children }: Props) => {
   const user = useContext(UserContext);
+
+  if (isUndefined(user)) {
+    return (
+      <>
+        <Navbar />
+        <div className="mt-64">
+          <Loader />
+        </div>
+      </>
+    );
+  }
 
   return (
     <Route

@@ -51,7 +51,7 @@ const CreateRoom: React.FC = () => {
 
       <div
         className="w-full md:w-1/2 flex flex-col"
-        style={{ height: "calc(100vh - 4rem)" }}
+        style={{ height: "calc(100vh - 6em)" }}
       >
         <div className="flex flex-col justify-center md:justify-start my-auto pt-8 md:pt-0 px-8 md:px-24 lg:px-32">
           <div className="text-center">
@@ -93,7 +93,7 @@ const CreateRoom: React.FC = () => {
 
       <div
         className="w-full md:w-1/2 flex flex-col bg-gray-300"
-        style={{ height: "calc(100vh - 4rem)" }}
+        style={{ height: "calc(100vh - 6rem)" }}
       >
         <div className="flex flex-col justify-center md:justify-start my-auto pt-8 md:pt-0 px-8 md:px-24 lg:px-32">
           <div className="text-center">
