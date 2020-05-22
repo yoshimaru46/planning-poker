@@ -48,3 +48,7 @@ To learn React, check out the [React documentation](https://reactjs.org/).
 `yarn build`
 
 `firebase deploy --only hosting`
+
+## Figma
+
+https://www.figma.com/file/RVrTvTuqvXYBhLZOnxZosq/Planning-Poker
