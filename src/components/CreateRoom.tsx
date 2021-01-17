@@ -4,6 +4,7 @@ import { db } from "../Firebase";
 import { useHistory } from "react-router-dom";
 import Navbar from "./Navbar";
 import { UserContext } from "./UserContext";
+import firebase from "firebase/app";
 
 const CreateRoom: React.FC = () => {
   const user = useContext(UserContext);
@@ -24,6 +25,7 @@ const CreateRoom: React.FC = () => {
         creator_id: user.uid,
       })
       .then((res) => {
+        firebase.analytics().logEvent('room_created');
         history.push(`/rooms/${res.id}`);
       });
   };
