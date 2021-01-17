@@ -4,10 +4,9 @@ import { JoinRoomHistory } from "./Room";
 
 type Props = {
   joinRoomHistories: JoinRoomHistory[];
-  roomId: string;
 };
 
-const RoomMembers: React.FC<Props> = ({ joinRoomHistories, roomId }: Props) => {
+const RoomMembers: React.FC<Props> = ({ joinRoomHistories }: Props) => {
   return (
     <>
       <p className="bg-gray-800 text-white font-bold text-xl p-4 mb-4">Users</p>
