@@ -27,7 +27,7 @@ interface SelectedCardHistories {
   hide: boolean;
 }
 
-const STORY_POINTS = [0.5, 1, 2, 3, 5, 8];
+const STORY_POINTS = [1, 2, 3, 5, 8, 13, 21];
 
 const Room: React.FC = () => {
   const user = useContext(UserContext);
