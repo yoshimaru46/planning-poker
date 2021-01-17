@@ -245,7 +245,7 @@ const Room: React.FC = () => {
     selectedCardHistories.forEach((h) => {
       total += h.storyPoint;
     });
-    return Math.round(total / selectedCardHistories.length);
+    return Math.round((total / selectedCardHistories.length) * 10) / 10;
   };
 
   return (
@@ -270,7 +270,7 @@ const Room: React.FC = () => {
                   return (
                     <div
                       key={h.userId + h.storyPoint}
-                      className="w-1/12 p-2 m-6"
+                      className="w-1/12 p-2 m-2"
                     >
                       <Card point={h.storyPoint} hide={h.hide} />
                       <p className="mt-4">
@@ -313,7 +313,7 @@ const Room: React.FC = () => {
             <DndProvider backend={HTML5Backend}>
               <DropZone addSelectCardHistory={() => undefined}>
                 {selectableStoryPoints().map((storyPoint) => (
-                  <div key={storyPoint} className="w-1/12 p-2 m-6">
+                  <div key={storyPoint} className="w-1/12 p-2 m-2">
                     <CardItem id={storyPoint}>
                       <Card point={storyPoint} hide={false} />
                     </CardItem>
@@ -324,7 +324,7 @@ const Room: React.FC = () => {
           </section>
         </div>
         <div className="w-1/4 bg-gray-400">
-          <RoomMembers joinRoomHistories={joinRoomHistories} roomId={roomId} />
+          <RoomMembers joinRoomHistories={joinRoomHistories}/>
         </div>
       </div>
     </div>
