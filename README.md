@@ -43,6 +43,15 @@ You can learn more in the [Create React App documentation](https://facebook.gith
 
 To learn React, check out the [React documentation](https://reactjs.org/).
 
+---
+
+## How to develop
+
+1. Create firebase app for development
+1. Copy `.env` from `.env.sanple`  
+1. Input credentials to `.env` from Firebase SDK snippet
+1. Run `yarn start`
+
 ## How to deploy
 
 `yarn build`
