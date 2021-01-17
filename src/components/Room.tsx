@@ -10,6 +10,7 @@ import Navbar from "./Navbar";
 import RoomMembers from "./RoomMembers";
 import Card from "./Card";
 import { UserContext } from "./UserContext";
+import firebase from "firebase/app";
 
 export interface JoinRoomHistory {
   roomId: string;
@@ -134,6 +135,8 @@ const Room: React.FC = () => {
       created_at: new Date(),
       hide: isHideAllCards,
     });
+
+    firebase.analytics().logEvent('card_selected');
   };
 
   const toggleHideAllCards = async (hide: boolean) => {

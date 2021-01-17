@@ -38,6 +38,7 @@ const CreateRoom: React.FC = () => {
 
     docRef.get().then((doc) => {
       if (doc.exists) {
+        firebase.analytics().logEvent('join_room');
         history.push(`/rooms/${roomId}`);
       } else {
         setError("Room does not exists. Please enter another Room ID.");
