@@ -357,7 +357,7 @@ const Room = () => {
                         }
                       >
                         <div className="relative">
-                          <Card point={h.storyPoint} hide={h.hide} />
+                          <Card point={h.storyPoint} hide={isMyHistory ? false : h.hide} />
                           {photoUrlByUserId[h.userId] && (
                             <img
                               className="absolute -bottom-2 -right-2 w-6 h-6 rounded-full border-2 border-white shadow-md"
@@ -371,7 +371,7 @@ const Room = () => {
                         {isMyHistory ? (
                           <span className="font-bold text-blue-600">
                             {h.userName}
-                            {!h.hide ? ` (${h.storyPoint})` : ""}
+                            {` (${h.storyPoint})`}
                           </span>
                         ) : (
                           h.userName
