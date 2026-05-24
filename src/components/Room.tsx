@@ -53,6 +53,7 @@ const Room = () => {
     SelectedCardHistory[]
   >([]);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
   const [urlCopied, setUrlCopied] = useState(false);
 
   // Refs to hold latest values for use in the cleanup function (avoids stale closures)
@@ -63,14 +64,14 @@ const Room = () => {
 
   const isHideAllCards = selectedCardHistories.every((h) => h.hide);
 
-  // When hidden, sort by userId (stable, non-revealing order) to prevent
-  // inferring card values from position. When revealed, show in story_point
+  // When hidden, sort by selection order (createdAt) so the display order
+  // reflects the order in which users voted. When revealed, show in story_point
   // order (already sorted by Firestore query).
   const displayedHistories = useMemo(
     () =>
       isHideAllCards
-        ? [...selectedCardHistories].sort((a, b) =>
-            a.userId.localeCompare(b.userId)
+        ? [...selectedCardHistories].sort(
+            (a, b) => a.createdAt.toMillis() - b.createdAt.toMillis()
           )
         : selectedCardHistories,
     [selectedCardHistories, isHideAllCards]
@@ -233,9 +234,14 @@ const Room = () => {
     setShowResetConfirm(true);
   };
 
-  const handleResetConfirm = async () => {
+  const handleResetConfirm = () => {
     setShowResetConfirm(false);
-    await resetAllCards();
+    setIsResetting(true);
+    // アニメーション完了後（350ms）に実際の削除を実行
+    setTimeout(async () => {
+      await resetAllCards();
+      setIsResetting(false);
+    }, 350);
   };
 
   const handleResetCancel = () => {
@@ -282,7 +288,7 @@ const Room = () => {
                 return (
                   <div
                     key={h.userId + h.storyPoint}
-                    className="w-1/12 p-2 m-2 animate-card-pop"
+                    className={`w-1/12 p-2 m-2 ${isResetting ? "animate-card-dismiss" : "animate-card-pop"}`}
                   >
                     <div
                       className={

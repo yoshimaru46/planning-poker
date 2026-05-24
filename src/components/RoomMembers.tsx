@@ -26,11 +26,17 @@ const RoomMembers: React.FC<Props> = ({ joinRoomHistories, votedUserIds }: Props
               className="flex items-center ml-4 mr-4 mb-4 pb-2 border-b-2 border-gray-500"
             >
               <div className="relative">
-                <img
-                  className="w-10 h-10 rounded-full"
-                  src={u.photoURL}
-                  alt={u.userName}
-                />
+                {u.photoURL ? (
+                  <img
+                    className="w-10 h-10 rounded-full"
+                    src={u.photoURL}
+                    alt={u.userName}
+                  />
+                ) : (
+                  <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center text-gray-600 text-sm font-bold select-none">
+                    {u.userName.charAt(0).toUpperCase()}
+                  </div>
+                )}
                 {hasVoted && (
                   <span className="absolute -bottom-1 -right-1 bg-green-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center leading-none">
                     ✓

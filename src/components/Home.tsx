@@ -1,13 +1,15 @@
-import { useContext } from "react";
+import { useContext, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { UserContext } from "./UserContext";
 import { loginWithGithub } from "../firebase/loginWithGithub";
+import { loginAnonymously } from "../firebase/loginAnonymously";
 import { logoutWithGithub } from "../firebase/logoutWithGithub";
 import Loader from "./Loader";
 
 const Home = () => {
   const navigate = useNavigate();
   const user = useContext(UserContext);
+  const [devName, setDevName] = useState("");
 
   return (
     <div className="w-full flex flex-wrap">
@@ -32,6 +34,30 @@ const Home = () => {
                   Login with GitHub
                 </button>
               </div>
+
+              {import.meta.env.DEV && (
+                <div className="border border-dashed border-gray-400 rounded p-4 mt-4">
+                  <p className="text-center text-xs text-gray-500 mb-3">
+                    ⚙️ Dev only
+                  </p>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      placeholder="表示名（例: Alice）"
+                      value={devName}
+                      onChange={(e) => setDevName(e.target.value)}
+                      className="border border-gray-300 rounded px-3 py-1 text-sm flex-1"
+                    />
+                    <button
+                      disabled={!devName.trim()}
+                      className="bg-gray-600 hover:bg-gray-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold py-1 px-3 rounded text-sm"
+                      onClick={() => loginAnonymously(devName.trim())}
+                    >
+                      匿名で参加
+                    </button>
+                  </div>
+                </div>
+              )}
             </>
           )}
 
