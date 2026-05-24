@@ -10,6 +10,8 @@ import {
   deleteDoc,
   updateDoc,
   onSnapshot,
+  doc,
+  setDoc,
   type Timestamp,
 } from "firebase/firestore";
 import { logEvent } from "firebase/analytics";
@@ -145,21 +147,14 @@ const Room = () => {
   useEffect(() => {
     if (!roomId || !user) return;
 
-    // Register the current user in the room
-    const joinQuery = query(
-      collection(db, "join_room_histories"),
-      where("room_id", "==", roomId),
-      where("user_id", "==", user.uid)
-    );
-    getDocs(joinQuery).then((snapshot) => {
-      if (snapshot.size === 0) {
-        addDoc(collection(db, "join_room_histories"), {
-          room_id: roomId,
-          user_id: user.uid,
-          user_name: user.displayName,
-          photo_url: user.photoURL,
-        });
-      }
+    // Register the current user in the room.
+    // Use a deterministic document ID to prevent duplicates from race conditions.
+    const joinDocId = `${roomId}_${user.uid}`;
+    setDoc(doc(db, "join_room_histories", joinDocId), {
+      room_id: roomId,
+      user_id: user.uid,
+      user_name: user.displayName,
+      photo_url: user.photoURL,
     });
 
     // Subscribe to room members
@@ -207,20 +202,14 @@ const Room = () => {
       unsubscribeMembers();
       unsubscribeCards();
 
-      // Remove current user from room on unmount
+      // Remove current user from room on unmount.
+      // Use the same deterministic document ID used when joining.
       const currentRoomId = roomIdRef.current;
       const currentUser = userRef.current;
       if (!currentRoomId || !currentUser) return;
 
-      getDocs(
-        query(
-          collection(db, "join_room_histories"),
-          where("room_id", "==", currentRoomId),
-          where("user_id", "==", currentUser.uid)
-        )
-      ).then((snapshot) => {
-        snapshot.docs.forEach((doc) => deleteDoc(doc.ref));
-      });
+      const joinDocId = `${currentRoomId}_${currentUser.uid}`;
+      deleteDoc(doc(db, "join_room_histories", joinDocId));
     };
   }, [roomId, user]);
 
@@ -382,7 +371,7 @@ const Room = () => {
                     className="bg-black hover:bg-gray-700 text-white font-bold py-2 px-6 rounded text-xl"
                     onClick={() => toggleHideAllCards(!isHideAllCards)}
                   >
-                    {isHideAllCards ? "👁 Show" : "🙈 Hide"}
+                    {isHideAllCards ? "Show" : "Hide"}
                   </button>
 
                   {showResetConfirm ? (
