@@ -1,19 +1,20 @@
-import React, { createContext, useEffect, useState } from "react";
-import firebase from "firebase/app";
+import { createContext, useEffect, useState, type ReactNode } from "react";
+import { onAuthStateChanged, type User } from "firebase/auth";
+import { auth } from "../Firebase";
 
-export const UserContext = createContext<firebase.User | undefined | null>(undefined);
+export const UserContext = createContext<User | null | undefined>(undefined);
 
-const UserProvider: React.FC = (props) => {
-  const [user, setUser] = useState<firebase.User | undefined | null>(undefined);
+const UserProvider = ({ children }: { children: ReactNode }) => {
+  const [user, setUser] = useState<User | null | undefined>(undefined);
 
   useEffect(() => {
-    firebase.auth().onAuthStateChanged((userAuth) => {
+    const unsubscribe = onAuthStateChanged(auth, (userAuth) => {
       setUser(userAuth);
     });
+    return unsubscribe;
   }, []);
 
-  return (
-    <UserContext.Provider value={user}>{props.children}</UserContext.Provider>
-  );
+  return <UserContext.Provider value={user}>{children}</UserContext.Provider>;
 };
+
 export default UserProvider;

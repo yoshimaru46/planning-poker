@@ -1,5 +1,3 @@
-import React from "react";
-
 import Routes from "./Routes";
 import UserProvider from "./UserContext";
 import { ToastContainer } from "react-toastify";

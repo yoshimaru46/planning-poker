@@ -1,9 +1,8 @@
-import React, { useContext } from "react";
-
+import { useContext } from "react";
 import { UserContext } from "./UserContext";
 import { logoutWithGithub } from "../firebase/logoutWithGithub";
 
-const Navbar: React.FC = () => {
+const Navbar = () => {
   const user = useContext(UserContext);
 
   return (
@@ -18,19 +17,18 @@ const Navbar: React.FC = () => {
         <div className="flex items-center">
           <div className="w-10 h-10 rounded-full overflow-hidden shadow-inner table">
             <img
-              src={user?.photoURL || ""}
+              src={user.photoURL ?? ""}
               alt="Avatar"
               className="object-cover object-center w-full h-full"
             />
           </div>
           <div className="ml-2 flex justify-center items-center text-gray-700">
-            <a
-              href="/"
-              className="text-lg no-underline text-white ml-2"
+            <button
+              className="text-lg text-white ml-2 bg-transparent border-none cursor-pointer"
               onClick={logoutWithGithub}
             >
               Logout
-            </a>
+            </button>
           </div>
         </div>
       )}

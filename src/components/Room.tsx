@@ -1,16 +1,26 @@
-import React, { useContext, useEffect, useRef, useState } from "react";
-
-import { db } from "../Firebase";
-import { useLocation } from "react-router-dom";
-
+import { useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
+import { useParams } from "react-router-dom";
+import {
+  collection,
+  query,
+  where,
+  orderBy,
+  getDocs,
+  addDoc,
+  deleteDoc,
+  updateDoc,
+  onSnapshot,
+  type Timestamp,
+} from "firebase/firestore";
+import { logEvent } from "firebase/analytics";
 import { DndProvider, useDrag, useDrop } from "react-dnd";
-import HTML5Backend from "react-dnd-html5-backend";
+import { HTML5Backend } from "react-dnd-html5-backend";
 
+import { db, analytics } from "../Firebase";
 import Navbar from "./Navbar";
 import RoomMembers from "./RoomMembers";
 import Card from "./Card";
 import { UserContext } from "./UserContext";
-import firebase from "firebase/app";
 
 export interface JoinRoomHistory {
   roomId: string;
@@ -19,235 +29,254 @@ export interface JoinRoomHistory {
   photoURL: string;
 }
 
-interface SelectedCardHistories {
+interface SelectedCardHistory {
   roomId: string;
   userId: string;
   userName: string;
   storyPoint: number;
-  createdAt: Date;
+  createdAt: Timestamp;
   hide: boolean;
 }
 
 const STORY_POINTS = [1, 2, 3, 5, 8, 13, 21];
+const CARD_TYPE = "card";
 
-const Room: React.FC = () => {
+// --- DropZone component (extracted to avoid re-creation on each render) ---
+
+interface DropZoneProps {
+  onDrop: (item: { id: number }) => void;
+  children: ReactNode;
+}
+
+const DropZone = ({ onDrop, children }: DropZoneProps) => {
+  const [, drop] = useDrop<{ id: number }, void, unknown>(
+    () => ({
+      accept: CARD_TYPE,
+      drop(item) {
+        onDrop(item);
+      },
+    }),
+    [onDrop]
+  );
+
+  return (
+    <div
+      ref={drop}
+      className="flex content-around flex-wrap bg-gray-200"
+      style={{ height: "30vh" }}
+    >
+      {children}
+    </div>
+  );
+};
+
+// --- CardItem component (extracted to avoid re-creation on each render) ---
+
+interface CardItemProps {
+  id: number;
+  children: ReactNode;
+}
+
+const CardItem = ({ id, children }: CardItemProps) => {
+  const [{ isDragging }, drag] = useDrag<
+    { id: number },
+    void,
+    { isDragging: boolean }
+  >(
+    () => ({
+      type: CARD_TYPE,
+      item: { id },
+      collect: (monitor) => ({
+        isDragging: monitor.isDragging(),
+      }),
+    }),
+    [id]
+  );
+
+  return (
+    <div ref={drag} style={{ opacity: isDragging ? 0 : 1 }}>
+      {children}
+    </div>
+  );
+};
+
+// --- Room component ---
+
+const Room = () => {
   const user = useContext(UserContext);
+  const { id: roomId } = useParams<{ id: string }>();
 
   const [joinRoomHistories, setJoinRoomHistories] = useState<JoinRoomHistory[]>(
     []
   );
   const [selectedCardHistories, setSelectedCardHistories] = useState<
-    SelectedCardHistories[]
+    SelectedCardHistory[]
   >([]);
+
+  // Refs to hold latest values for use in the cleanup function (avoids stale closures)
+  const roomIdRef = useRef(roomId);
+  const userRef = useRef(user);
+  roomIdRef.current = roomId;
+  userRef.current = user;
 
   const isHideAllCards = selectedCardHistories.every((h) => h.hide);
 
-  const location = useLocation();
-  const roomId = location.pathname.split("/")[2];
+  const selectableStoryPoints = STORY_POINTS.filter(
+    (p) =>
+      p !==
+      selectedCardHistories.find((h) => h.userId === user?.uid)?.storyPoint
+  );
 
-  const selectableStoryPoints = () => {
-    const myHistory = selectedCardHistories.find(
-      (data) => data.userId === user?.uid
+  useEffect(() => {
+    if (!roomId || !user) return;
+
+    // Register the current user in the room
+    const joinQuery = query(
+      collection(db, "join_room_histories"),
+      where("room_id", "==", roomId),
+      where("user_id", "==", user.uid)
     );
-    return STORY_POINTS.filter((p) => p !== myHistory?.storyPoint);
-  };
-
-  const createJoinRoomHistories = async () => {
-    if (!user) {
-      console.error("user is undefined!");
-      return;
-    }
-
-    const querySnapshot = await db
-      .collection("join_room_histories")
-      .where("room_id", "==", roomId)
-      .where("user_id", "==", user.uid)
-      .get();
-
-    if (querySnapshot.size === 0) {
-      await db.collection("join_room_histories").doc().set({
-        room_id: roomId,
-        user_id: user.uid,
-        user_name: user.displayName,
-        photo_url: user.photoURL,
-      });
-    }
-  };
-
-  const deleteJoinRoomHistories = async () => {
-    if (!user) {
-      console.error("user is undefined!");
-      return;
-    }
-
-    const query = await db
-      .collection("join_room_histories")
-      .where("room_id", "==", roomId)
-      .where("user_id", "==", user.uid)
-      .get();
-
-    for (const doc of query.docs) {
-      await doc.ref.delete();
-    }
-  };
-
-  const getUsersInTheRoom = () => {
-    db.collection("join_room_histories")
-      .where("room_id", "==", roomId)
-      .onSnapshot((querySnapshot) => {
-        const histories: JoinRoomHistory[] = [];
-        querySnapshot.forEach((doc) => {
-          const data = doc.data();
-          // @ts-ignore
-          histories.push({
-            roomId: data.room_id,
-            userId: data.user_id,
-            userName: data.user_name,
-            photoURL: data.photo_url,
-          });
+    getDocs(joinQuery).then((snapshot) => {
+      if (snapshot.size === 0) {
+        addDoc(collection(db, "join_room_histories"), {
+          room_id: roomId,
+          user_id: user.uid,
+          user_name: user.displayName,
+          photo_url: user.photoURL,
         });
-
-        setJoinRoomHistories(histories);
-      });
-  };
-
-  const addSelectCardHistory = async ({ id }: { type: string; id: number }) => {
-    if (!user) {
-      console.error("user is undefined!");
-      return;
-    }
-
-    const query = await db
-      .collection("select_card_histories")
-      .where("room_id", "==", roomId)
-      .where("user_id", "==", user.uid)
-      .get();
-
-    for (const doc of query.docs) {
-      await doc.ref.delete();
-    }
-
-    await db.collection("select_card_histories").doc().set({
-      room_id: roomId,
-      user_id: user.uid,
-      user_name: user.displayName,
-      story_point: id,
-      created_at: new Date(),
-      hide: isHideAllCards,
+      }
     });
 
-    firebase.analytics().logEvent('card_selected');
-  };
-
-  const toggleHideAllCards = async (hide: boolean) => {
-    db.collection("select_card_histories")
-      .where("room_id", "==", roomId)
-      .get()
-      .then((querySnapshot) => {
-        querySnapshot.forEach((doc) => {
-          doc.ref.update({
-            hide: hide,
-          });
+    // Subscribe to room members
+    const membersQuery = query(
+      collection(db, "join_room_histories"),
+      where("room_id", "==", roomId)
+    );
+    const unsubscribeMembers = onSnapshot(membersQuery, (snapshot) => {
+      const histories: JoinRoomHistory[] = [];
+      snapshot.forEach((doc) => {
+        const data = doc.data();
+        histories.push({
+          roomId: data.room_id as string,
+          userId: data.user_id as string,
+          userName: data.user_name as string,
+          photoURL: data.photo_url as string,
         });
       });
+      setJoinRoomHistories(histories);
+    });
+
+    // Subscribe to selected cards
+    const cardsQuery = query(
+      collection(db, "select_card_histories"),
+      where("room_id", "==", roomId),
+      orderBy("story_point")
+    );
+    const unsubscribeCards = onSnapshot(cardsQuery, (snapshot) => {
+      const histories: SelectedCardHistory[] = [];
+      snapshot.forEach((doc) => {
+        const data = doc.data();
+        histories.push({
+          roomId: data.room_id as string,
+          userId: data.user_id as string,
+          userName: data.user_name as string,
+          storyPoint: data.story_point as number,
+          createdAt: data.created_at as Timestamp,
+          hide: data.hide as boolean,
+        });
+      });
+      setSelectedCardHistories(histories);
+    });
+
+    return () => {
+      unsubscribeMembers();
+      unsubscribeCards();
+
+      // Remove current user from room on unmount
+      const currentRoomId = roomIdRef.current;
+      const currentUser = userRef.current;
+      if (!currentRoomId || !currentUser) return;
+
+      getDocs(
+        query(
+          collection(db, "join_room_histories"),
+          where("room_id", "==", currentRoomId),
+          where("user_id", "==", currentUser.uid)
+        )
+      ).then((snapshot) => {
+        snapshot.docs.forEach((doc) => deleteDoc(doc.ref));
+      });
+    };
+  }, [roomId, user]);
+
+  const addSelectCardHistory = useCallback(
+    async ({ id }: { id: number }) => {
+      if (!user || !roomId) return;
+      try {
+        const prev = await getDocs(
+          query(
+            collection(db, "select_card_histories"),
+            where("room_id", "==", roomId),
+            where("user_id", "==", user.uid)
+          )
+        );
+        await Promise.all(prev.docs.map((doc) => deleteDoc(doc.ref)));
+
+        await addDoc(collection(db, "select_card_histories"), {
+          room_id: roomId,
+          user_id: user.uid,
+          user_name: user.displayName,
+          story_point: id,
+          created_at: new Date(),
+          hide: isHideAllCards,
+        });
+
+        if (analytics) logEvent(analytics, "card_selected");
+      } catch (e) {
+        console.error("Failed to select card:", e);
+      }
+    },
+    [user, roomId, isHideAllCards]
+  );
+
+  const toggleHideAllCards = async (hide: boolean) => {
+    if (!roomId) return;
+    try {
+      const snapshot = await getDocs(
+        query(
+          collection(db, "select_card_histories"),
+          where("room_id", "==", roomId)
+        )
+      );
+      await Promise.all(
+        snapshot.docs.map((doc) => updateDoc(doc.ref, { hide }))
+      );
+    } catch (e) {
+      console.error("Failed to toggle cards:", e);
+    }
   };
 
   const resetAllCards = async () => {
-    const query = await db
-      .collection("select_card_histories")
-      .where("room_id", "==", roomId)
-      .get();
-
-    for (const doc of query.docs) {
-      await doc.ref.delete();
+    if (!roomId) return;
+    try {
+      const snapshot = await getDocs(
+        query(
+          collection(db, "select_card_histories"),
+          where("room_id", "==", roomId)
+        )
+      );
+      await Promise.all(snapshot.docs.map((doc) => deleteDoc(doc.ref)));
+    } catch (e) {
+      console.error("Failed to reset cards:", e);
     }
-
-    await toggleHideAllCards(true);
-  };
-
-  const getSelectCardHistories = () => {
-    db.collection("select_card_histories")
-      .where("room_id", "==", roomId)
-      .orderBy("story_point")
-      .onSnapshot((querySnapshot) => {
-        const histories: SelectedCardHistories[] = [];
-        querySnapshot.forEach((doc) => {
-          const data = doc.data();
-
-          // @ts-ignore
-          histories.push({
-            roomId: data.room_id,
-            userId: data.user_id,
-            userName: data.user_name,
-            storyPoint: data.story_point,
-            createdAt: data.created_at,
-            hide: data.hide,
-          });
-        });
-
-        setSelectedCardHistories(histories);
-      });
-  };
-
-  useEffect(() => {
-    createJoinRoomHistories();
-    getUsersInTheRoom();
-    getSelectCardHistories();
-
-    return () => {
-      deleteJoinRoomHistories();
-    };
-  }, []);
-
-  // @ts-ignore
-  const DropZone = ({ addSelectCardHistory, children }) => {
-    const ref = useRef(null);
-    const [, drop] = useDrop({
-      accept: "card",
-      drop(item) {
-        addSelectCardHistory(item);
-      },
-    });
-    drop(ref);
-    return (
-      <div
-        className="flex content-around flex-wrap bg-gray-200"
-        style={{ height: "30vh" }}
-        ref={ref}
-      >
-        {" "}
-        {children}
-      </div>
-    );
-  };
-
-  // @ts-ignore
-  const CardItem = ({ id, children }) => {
-    const ref = useRef(null);
-    const [{ isDragging }, drag] = useDrag({
-      item: { type: "card", id },
-      collect: (monitor) => ({
-        isDragging: monitor.isDragging(),
-      }),
-    });
-    const opacity = isDragging ? 0 : 1;
-    drag(ref);
-    return (
-      <div ref={ref} style={{ opacity }}>
-        {children}
-      </div>
-    );
   };
 
   const averagePoint = (): number => {
-    if (selectedCardHistories.length === 0) {
-      return 0;
-    }
-
-    let total = 0;
-    selectedCardHistories.forEach((h) => {
-      total += h.storyPoint;
-    });
+    if (selectedCardHistories.length === 0) return 0;
+    const total = selectedCardHistories.reduce(
+      (sum, h) => sum + h.storyPoint,
+      0
+    );
     return Math.round((total / selectedCardHistories.length) * 10) / 10;
   };
 
@@ -259,7 +288,7 @@ const Room: React.FC = () => {
         <div className="w-3/4 bg-white">
           <section>
             <p className="bg-gray-800 text-white font-bold text-xl p-4">
-              Selected Cards{" "}
+              Selected Cards
             </p>
 
             <p className="bg-gray-600 text-white font-bold text-sm p-4">
@@ -267,7 +296,7 @@ const Room: React.FC = () => {
             </p>
 
             <DndProvider backend={HTML5Backend}>
-              <DropZone addSelectCardHistory={addSelectCardHistory}>
+              <DropZone onDrop={addSelectCardHistory}>
                 {selectedCardHistories.map((h) => {
                   const isMyHistory = h.userId === user?.uid;
                   return (
@@ -283,51 +312,50 @@ const Room: React.FC = () => {
                   );
                 })}
               </DropZone>
-            </DndProvider>
-          </section>
 
-          <section>
-            <div className="text-center py-4">
-              <button
-                className="bg-black hover:bg-gray-700 text-white font-bold py-2 px-4 rounded text-xl"
-                onClick={() => toggleHideAllCards(!isHideAllCards)}
-              >
-                {isHideAllCards ? "Show" : "Hide"}
-              </button>
+              <section>
+                <div className="text-center py-4">
+                  <button
+                    className="bg-black hover:bg-gray-700 text-white font-bold py-2 px-4 rounded text-xl"
+                    onClick={() => toggleHideAllCards(!isHideAllCards)}
+                  >
+                    {isHideAllCards ? "Show" : "Hide"}
+                  </button>
 
-              <button
-                className="bg-white hover:bg-gray-200 text-black font-bold py-2 px-4 ml-64 rounded text-xl border-black border-2"
-                onClick={resetAllCards}
-              >
-                Reset
-              </button>
-            </div>
-          </section>
+                  <button
+                    className="bg-white hover:bg-gray-200 text-black font-bold py-2 px-4 ml-64 rounded text-xl border-black border-2"
+                    onClick={resetAllCards}
+                  >
+                    Reset
+                  </button>
+                </div>
+              </section>
 
-          <section>
-            <p className="bg-gray-800 text-white font-bold text-xl p-4">
-              Your Hand{" "}
-              <span className="text-white text-sm pl-4">
-                {" "}
-                (Please Drag & Drop your card to "Selected Cards" ↑)
-              </span>
-            </p>
+              <section>
+                <p className="bg-gray-800 text-white font-bold text-xl p-4">
+                  Your Hand{" "}
+                  <span className="text-white text-sm pl-4">
+                    (Please Drag &amp; Drop your card to &quot;Selected
+                    Cards&quot; ↑)
+                  </span>
+                </p>
 
-            <DndProvider backend={HTML5Backend}>
-              <DropZone addSelectCardHistory={() => undefined}>
-                {selectableStoryPoints().map((storyPoint) => (
-                  <div key={storyPoint} className="w-1/12 p-2 m-2">
-                    <CardItem id={storyPoint}>
-                      <Card point={storyPoint} hide={false} />
-                    </CardItem>
-                  </div>
-                ))}
-              </DropZone>
+                <DropZone onDrop={() => undefined}>
+                  {selectableStoryPoints.map((storyPoint) => (
+                    <div key={storyPoint} className="w-1/12 p-2 m-2">
+                      <CardItem id={storyPoint}>
+                        <Card point={storyPoint} hide={false} />
+                      </CardItem>
+                    </div>
+                  ))}
+                </DropZone>
+              </section>
             </DndProvider>
           </section>
         </div>
+
         <div className="w-1/4 bg-gray-400">
-          <RoomMembers joinRoomHistories={joinRoomHistories}/>
+          <RoomMembers joinRoomHistories={joinRoomHistories} />
         </div>
       </div>
     </div>

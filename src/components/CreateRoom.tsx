@@ -1,49 +1,52 @@
-import React, { useContext, useState } from "react";
-
-import { db } from "../Firebase";
-import { useHistory } from "react-router-dom";
+import { useContext, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import {
+  collection,
+  addDoc,
+  doc,
+  getDoc,
+} from "firebase/firestore";
+import { logEvent } from "firebase/analytics";
+import { db, analytics } from "../Firebase";
 import Navbar from "./Navbar";
 import { UserContext } from "./UserContext";
-import firebase from "firebase/app";
 
-const CreateRoom: React.FC = () => {
+const CreateRoom = () => {
   const user = useContext(UserContext);
-
-  const history = useHistory();
+  const navigate = useNavigate();
 
   const [roomId, setRoomId] = useState("");
-  const [error, setError] = useState<undefined | string>(undefined);
+  const [error, setError] = useState<string | undefined>(undefined);
 
-  const createRoom = () => {
-    if (!user) {
-      console.error("user is undefined!");
-      return;
-    }
-
-    db.collection("rooms")
-      .add({
+  const createRoom = async () => {
+    if (!user) return;
+    try {
+      const res = await addDoc(collection(db, "rooms"), {
         creator_id: user.uid,
-      })
-      .then((res) => {
-        firebase.analytics().logEvent('room_created');
-        history.push(`/rooms/${res.id}`);
       });
+      if (analytics) logEvent(analytics, "room_created");
+      navigate(`/rooms/${res.id}`);
+    } catch (e) {
+      console.error("Failed to create room:", e);
+      setError("Failed to create room. Please try again.");
+    }
   };
 
-  // @ts-ignore
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-
-    const docRef = db.collection("rooms").doc(roomId);
-
-    docRef.get().then((doc) => {
-      if (doc.exists) {
-        firebase.analytics().logEvent('join_room');
-        history.push(`/rooms/${roomId}`);
+    try {
+      const docRef = doc(db, "rooms", roomId);
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        if (analytics) logEvent(analytics, "join_room");
+        navigate(`/rooms/${roomId}`);
       } else {
-        setError("Room does not exists. Please enter another Room ID.");
+        setError("Room does not exist. Please enter another Room ID.");
       }
-    });
+    } catch (e) {
+      console.error("Failed to join room:", e);
+      setError("Failed to join room. Please try again.");
+    }
   };
 
   const isSubmitDisabled = roomId.length === 0;

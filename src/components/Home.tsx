@@ -1,18 +1,12 @@
-import React, { useContext } from "react";
-
-import { isNull, isUndefined } from "lodash-es";
-
-import { useHistory } from "react-router-dom";
-
+import { useContext } from "react";
+import { useNavigate } from "react-router-dom";
 import { UserContext } from "./UserContext";
-
 import { loginWithGithub } from "../firebase/loginWithGithub";
 import { logoutWithGithub } from "../firebase/logoutWithGithub";
 import Loader from "./Loader";
 
-const Home: React.FC = () => {
-  const history = useHistory();
-
+const Home = () => {
+  const navigate = useNavigate();
   const user = useContext(UserContext);
 
   return (
@@ -25,9 +19,9 @@ const Home: React.FC = () => {
         </div>
 
         <div className="flex flex-col justify-center md:justify-start my-auto pt-8 md:pt-0 px-8 md:px-24 lg:px-32">
-          {isUndefined(user) && <Loader />}
+          {user === undefined && <Loader />}
 
-          {isNull(user) && (
+          {user === null && (
             <>
               <p className="text-center text-3xl">Welcome.</p>
               <div className="text-center pt-12 pb-12">
@@ -47,7 +41,7 @@ const Home: React.FC = () => {
               <div className="text-center pt-12 pb-12">
                 <button
                   className="bg-black hover:bg-gray-700 text-white font-bold py-2 px-4 rounded text-xl"
-                  onClick={() => history.push("/create-room")}
+                  onClick={() => navigate("/create-room")}
                 >
                   Join or Create a room
                 </button>
@@ -70,7 +64,7 @@ const Home: React.FC = () => {
         <img
           className="object-cover w-full h-screen hidden md:block"
           alt="home-bg"
-          src={`${process.env.PUBLIC_URL}/img/home-bg.png`}
+          src="/img/home-bg.png"
         />
       </div>
     </div>
