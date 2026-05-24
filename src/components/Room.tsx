@@ -371,7 +371,6 @@ const Room = () => {
                         {isMyHistory ? (
                           <span className="font-bold text-blue-600">
                             {h.userName}
-                            {` (${h.storyPoint})`}
                           </span>
                         ) : (
                           h.userName
