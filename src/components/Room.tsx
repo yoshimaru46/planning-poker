@@ -282,7 +282,7 @@ const Room = () => {
                 return (
                   <div
                     key={h.userId + h.storyPoint}
-                    className="w-1/12 p-2 m-2"
+                    className="w-1/12 p-2 m-2 animate-card-pop"
                   >
                     <div
                       className={
@@ -363,7 +363,11 @@ const Room = () => {
                   return (
                     <div
                       key={storyPoint}
-                      className={`w-1/12 p-2 m-2 ${isSelected ? "opacity-40 cursor-not-allowed" : "cursor-pointer"}`}
+                      className={`w-1/12 p-2 m-2 transition-all duration-200 select-none ${
+                        isSelected
+                          ? "opacity-40 cursor-not-allowed scale-95"
+                          : "cursor-pointer hover:-translate-y-2 hover:scale-110 active:scale-95 active:translate-y-0"
+                      }`}
                       onClick={isSelected ? undefined : () => addSelectCardHistory({ id: storyPoint })}
                     >
                       <Card point={storyPoint} hide={false} />
