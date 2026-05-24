@@ -1,4 +1,4 @@
-import { useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import {
   collection,
@@ -15,8 +15,6 @@ import {
   type Timestamp,
 } from "firebase/firestore";
 import { logEvent } from "firebase/analytics";
-import { DndProvider, useDrag, useDrop } from "react-dnd";
-import { HTML5Backend } from "react-dnd-html5-backend";
 
 import { db, analytics } from "../Firebase";
 import Navbar from "./Navbar";
@@ -41,66 +39,6 @@ interface SelectedCardHistory {
 }
 
 const STORY_POINTS = [1, 2, 3, 5, 8, 13, 21];
-const CARD_TYPE = "card";
-
-// --- DropZone component (extracted to avoid re-creation on each render) ---
-
-interface DropZoneProps {
-  onDrop: (item: { id: number }) => void;
-  children: ReactNode;
-}
-
-const DropZone = ({ onDrop, children }: DropZoneProps) => {
-  const [, drop] = useDrop<{ id: number }, void, unknown>(
-    () => ({
-      accept: CARD_TYPE,
-      drop(item) {
-        onDrop(item);
-      },
-    }),
-    [onDrop]
-  );
-
-  return (
-    <div
-      ref={drop}
-      className="flex content-around flex-wrap bg-gray-200"
-      style={{ height: "30vh" }}
-    >
-      {children}
-    </div>
-  );
-};
-
-// --- CardItem component (extracted to avoid re-creation on each render) ---
-
-interface CardItemProps {
-  id: number;
-  children: ReactNode;
-}
-
-const CardItem = ({ id, children }: CardItemProps) => {
-  const [{ isDragging }, drag] = useDrag<
-    { id: number },
-    void,
-    { isDragging: boolean }
-  >(
-    () => ({
-      type: CARD_TYPE,
-      item: { id },
-      collect: (monitor) => ({
-        isDragging: monitor.isDragging(),
-      }),
-    }),
-    [id]
-  );
-
-  return (
-    <div ref={drag} style={{ opacity: isDragging ? 0 : 1 }}>
-      {children}
-    </div>
-  );
-};
 
 // --- Room component ---
 
@@ -146,11 +84,9 @@ const Room = () => {
     [joinRoomHistories]
   );
 
-  const selectableStoryPoints = STORY_POINTS.filter(
-    (p) =>
-      p !==
-      selectedCardHistories.find((h) => h.userId === user?.uid)?.storyPoint
-  );
+  const mySelectedPoint = selectedCardHistories.find(
+    (h) => h.userId === user?.uid
+  )?.storyPoint;
 
   useEffect(() => {
     if (!roomId || !user) return;
@@ -340,107 +276,102 @@ const Room = () => {
               Average Point: {isHideAllCards ? "?" : averagePoint()}
             </p>
 
-            <DndProvider backend={HTML5Backend}>
-              <DropZone onDrop={addSelectCardHistory}>
-                {displayedHistories.map((h) => {
-                  const isMyHistory = h.userId === user?.uid;
-                  return (
-                    <div
-                      key={h.userId + h.storyPoint}
-                      className="w-1/12 p-2 m-2"
-                    >
-                      <div
-                        className={
-                          isMyHistory
-                            ? "inline-block ring-2 ring-blue-500 ring-offset-2 rounded-lg"
-                            : "inline-block"
-                        }
-                      >
-                        <div className="relative">
-                          <Card point={h.storyPoint} hide={isMyHistory ? false : h.hide} />
-                          {photoUrlByUserId[h.userId] && (
-                            <img
-                              className="absolute -bottom-2 -right-2 w-6 h-6 rounded-full border-2 border-white shadow-md"
-                              src={photoUrlByUserId[h.userId]}
-                              alt={h.userName}
-                            />
-                          )}
-                        </div>
-                      </div>
-                      <p className="mt-1 text-xs break-words">
-                        {isMyHistory ? (
-                          <span className="font-bold text-blue-600">
-                            {h.userName}
-                          </span>
-                        ) : (
-                          h.userName
-                        )}
-                      </p>
-                    </div>
-                  );
-                })}
-              </DropZone>
-
-              <section>
-                <div className="flex items-center justify-between py-4 px-6">
-                  <button
-                    className="bg-black hover:bg-gray-700 text-white font-bold py-2 px-6 rounded text-xl"
-                    onClick={() => toggleHideAllCards(!isHideAllCards)}
+            <div className="flex content-around flex-wrap bg-gray-200" style={{ height: "30vh" }}>
+              {displayedHistories.map((h) => {
+                const isMyHistory = h.userId === user?.uid;
+                return (
+                  <div
+                    key={h.userId + h.storyPoint}
+                    className="w-1/12 p-2 m-2"
                   >
-                    {isHideAllCards ? "Show" : "Hide"}
-                  </button>
-
-                  {showResetConfirm ? (
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm text-gray-600 font-medium">Reset?</span>
-                      <button
-                        className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded text-sm"
-                        onClick={handleResetConfirm}
-                      >
-                        Reset
-                      </button>
-                      <button
-                        className="bg-white hover:bg-gray-200 text-black font-bold py-2 px-4 rounded text-sm border-gray-400 border-2"
-                        onClick={handleResetCancel}
-                      >
-                        Cancel
-                      </button>
+                    <div
+                      className={
+                        isMyHistory
+                          ? "inline-block ring-2 ring-blue-500 ring-offset-2 rounded-lg"
+                          : "inline-block"
+                      }
+                    >
+                      <div className="relative">
+                        <Card point={h.storyPoint} hide={isMyHistory ? false : h.hide} />
+                        {photoUrlByUserId[h.userId] && (
+                          <img
+                            className="absolute -bottom-2 -right-2 w-6 h-6 rounded-full border-2 border-white shadow-md"
+                            src={photoUrlByUserId[h.userId]}
+                            alt={h.userName}
+                          />
+                        )}
+                      </div>
                     </div>
-                  ) : (
+                    <p className="mt-1 text-xs break-words">
+                      {isMyHistory ? (
+                        <span className="font-bold text-blue-600">
+                          {h.userName}
+                        </span>
+                      ) : (
+                        h.userName
+                      )}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+
+            <section>
+              <div className="flex items-center justify-between py-4 px-6">
+                <button
+                  className="bg-black hover:bg-gray-700 text-white font-bold py-2 px-6 rounded text-xl"
+                  onClick={() => toggleHideAllCards(!isHideAllCards)}
+                >
+                  {isHideAllCards ? "Show" : "Hide"}
+                </button>
+
+                {showResetConfirm ? (
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-gray-600 font-medium">Reset?</span>
                     <button
-                      className="bg-white hover:bg-gray-200 text-black font-bold py-2 px-4 rounded text-xl border-black border-2"
-                      onClick={handleResetClick}
+                      className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded text-sm"
+                      onClick={handleResetConfirm}
                     >
                       Reset
                     </button>
-                  )}
-                </div>
-              </section>
+                    <button
+                      className="bg-white hover:bg-gray-200 text-black font-bold py-2 px-4 rounded text-sm border-gray-400 border-2"
+                      onClick={handleResetCancel}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    className="bg-white hover:bg-gray-200 text-black font-bold py-2 px-4 rounded text-xl border-black border-2"
+                    onClick={handleResetClick}
+                  >
+                    Reset
+                  </button>
+                )}
+              </div>
+            </section>
 
-              <section>
-                <p className="bg-gray-800 text-white font-bold text-xl p-4">
-                  Your Hand{" "}
-                  <span className="text-white text-sm pl-4">
-                    (Please Drag &amp; Drop your card to &quot;Selected
-                    Cards&quot; ↑)
-                  </span>
-                </p>
+            <section>
+              <p className="bg-gray-800 text-white font-bold text-xl p-4">
+                Your Hand
+              </p>
 
-                <DropZone onDrop={() => undefined}>
-                  {selectableStoryPoints.map((storyPoint) => (
+              <div className="flex content-around flex-wrap bg-gray-200" style={{ height: "30vh" }}>
+                {STORY_POINTS.map((storyPoint) => {
+                  const isSelected = storyPoint === mySelectedPoint;
+                  return (
                     <div
                       key={storyPoint}
-                      className="w-1/12 p-2 m-2"
-                      onClick={() => addSelectCardHistory({ id: storyPoint })}
+                      className={`w-1/12 p-2 m-2 ${isSelected ? "opacity-40 cursor-not-allowed" : "cursor-pointer"}`}
+                      onClick={isSelected ? undefined : () => addSelectCardHistory({ id: storyPoint })}
                     >
-                      <CardItem id={storyPoint}>
-                        <Card point={storyPoint} hide={false} />
-                      </CardItem>
+                      <Card point={storyPoint} hide={false} />
                     </div>
-                  ))}
-                </DropZone>
-              </section>
-            </DndProvider>
+                  );
+                })}
+              </div>
+            </section>
           </section>
         </div>
 
