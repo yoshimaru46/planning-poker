@@ -112,6 +112,8 @@ const Room = () => {
   const [selectedCardHistories, setSelectedCardHistories] = useState<
     SelectedCardHistory[]
   >([]);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [urlCopied, setUrlCopied] = useState(false);
 
   // Refs to hold latest values for use in the cleanup function (avoids stale closures)
   const roomIdRef = useRef(roomId);
@@ -284,6 +286,29 @@ const Room = () => {
     }
   };
 
+  const copyRoomUrl = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      setUrlCopied(true);
+      setTimeout(() => setUrlCopied(false), 2000);
+    } catch (e) {
+      console.error("Failed to copy URL:", e);
+    }
+  };
+
+  const handleResetClick = () => {
+    setShowResetConfirm(true);
+  };
+
+  const handleResetConfirm = async () => {
+    setShowResetConfirm(false);
+    await resetAllCards();
+  };
+
+  const handleResetCancel = () => {
+    setShowResetConfirm(false);
+  };
+
   const averagePoint = (): number => {
     if (selectedCardHistories.length === 0) return 0;
     const total = selectedCardHistories.reduce(
@@ -300,9 +325,19 @@ const Room = () => {
       <div className="flex" style={{ height: "calc(100vh - 6rem)" }}>
         <div className="w-3/4 bg-white">
           <section>
-            <p className="bg-gray-800 text-white font-bold text-xl p-4">
-              Selected Cards
-            </p>
+            <div className="bg-gray-800 text-white font-bold text-xl p-4 flex items-center justify-between">
+              <span>Selected Cards</span>
+              <button
+                className={`text-sm font-normal px-3 py-1 rounded border transition-colors ${
+                  urlCopied
+                    ? "bg-green-600 border-green-500 text-white"
+                    : "bg-gray-700 hover:bg-gray-600 border-gray-500 text-gray-200"
+                }`}
+                onClick={copyRoomUrl}
+              >
+                {urlCopied ? "✓ Copied!" : "🔗 Share URL"}
+              </button>
+            </div>
 
             <p className="bg-gray-600 text-white font-bold text-sm p-4">
               Average Point: {isHideAllCards ? "?" : averagePoint()}
@@ -317,9 +352,24 @@ const Room = () => {
                       key={h.userId + h.storyPoint}
                       className="w-1/12 p-2 m-2"
                     >
-                      <Card point={h.storyPoint} hide={h.hide} />
-                      <p className="mt-4">
-                        {h.userName} {isMyHistory ? `(${h.storyPoint})` : ""}
+                      <div
+                        className={
+                          isMyHistory
+                            ? "inline-block ring-2 ring-blue-500 ring-offset-2 rounded-lg"
+                            : ""
+                        }
+                      >
+                        <Card point={h.storyPoint} hide={h.hide} />
+                      </div>
+                      <p className="mt-1 text-xs break-words">
+                        {isMyHistory ? (
+                          <span className="font-bold text-blue-600">
+                            {h.userName}
+                            {!h.hide ? ` (${h.storyPoint})` : ""}
+                          </span>
+                        ) : (
+                          h.userName
+                        )}
                       </p>
                     </div>
                   );
@@ -327,20 +377,38 @@ const Room = () => {
               </DropZone>
 
               <section>
-                <div className="text-center py-4">
+                <div className="flex items-center justify-between py-4 px-6">
                   <button
-                    className="bg-black hover:bg-gray-700 text-white font-bold py-2 px-4 rounded text-xl"
+                    className="bg-black hover:bg-gray-700 text-white font-bold py-2 px-6 rounded text-xl"
                     onClick={() => toggleHideAllCards(!isHideAllCards)}
                   >
-                    {isHideAllCards ? "Show" : "Hide"}
+                    {isHideAllCards ? "👁 Show" : "🙈 Hide"}
                   </button>
 
-                  <button
-                    className="bg-white hover:bg-gray-200 text-black font-bold py-2 px-4 ml-64 rounded text-xl border-black border-2"
-                    onClick={resetAllCards}
-                  >
-                    Reset
-                  </button>
+                  {showResetConfirm ? (
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-gray-600 font-medium">リセットしますか？</span>
+                      <button
+                        className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded text-sm"
+                        onClick={handleResetConfirm}
+                      >
+                        リセット
+                      </button>
+                      <button
+                        className="bg-white hover:bg-gray-200 text-black font-bold py-2 px-4 rounded text-sm border-gray-400 border-2"
+                        onClick={handleResetCancel}
+                      >
+                        キャンセル
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      className="bg-white hover:bg-gray-200 text-black font-bold py-2 px-4 rounded text-xl border-black border-2"
+                      onClick={handleResetClick}
+                    >
+                      Reset
+                    </button>
+                  )}
                 </div>
               </section>
 
@@ -355,7 +423,11 @@ const Room = () => {
 
                 <DropZone onDrop={() => undefined}>
                   {selectableStoryPoints.map((storyPoint) => (
-                    <div key={storyPoint} className="w-1/12 p-2 m-2">
+                    <div
+                      key={storyPoint}
+                      className="w-1/12 p-2 m-2"
+                      onClick={() => addSelectCardHistory({ id: storyPoint })}
+                    >
                       <CardItem id={storyPoint}>
                         <Card point={storyPoint} hide={false} />
                       </CardItem>
@@ -368,7 +440,10 @@ const Room = () => {
         </div>
 
         <div className="w-1/4 bg-gray-400">
-          <RoomMembers joinRoomHistories={joinRoomHistories} />
+          <RoomMembers
+            joinRoomHistories={joinRoomHistories}
+            votedUserIds={selectedCardHistories.map((h) => h.userId)}
+          />
         </div>
       </div>
     </div>
