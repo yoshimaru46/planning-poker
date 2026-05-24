@@ -1,4 +1,4 @@
-import { useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
+import { useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useParams } from "react-router-dom";
 import {
   collection,
@@ -120,6 +120,19 @@ const Room = () => {
   userRef.current = user;
 
   const isHideAllCards = selectedCardHistories.every((h) => h.hide);
+
+  // When hidden, sort by userId (stable, non-revealing order) to prevent
+  // inferring card values from position. When revealed, show in story_point
+  // order (already sorted by Firestore query).
+  const displayedHistories = useMemo(
+    () =>
+      isHideAllCards
+        ? [...selectedCardHistories].sort((a, b) =>
+            a.userId.localeCompare(b.userId)
+          )
+        : selectedCardHistories,
+    [selectedCardHistories, isHideAllCards]
+  );
 
   const selectableStoryPoints = STORY_POINTS.filter(
     (p) =>
@@ -297,7 +310,7 @@ const Room = () => {
 
             <DndProvider backend={HTML5Backend}>
               <DropZone onDrop={addSelectCardHistory}>
-                {selectedCardHistories.map((h) => {
+                {displayedHistories.map((h) => {
                   const isMyHistory = h.userId === user?.uid;
                   return (
                     <div
