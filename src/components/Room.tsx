@@ -138,6 +138,14 @@ const Room = () => {
     [selectedCardHistories, isHideAllCards]
   );
 
+  const photoUrlByUserId = useMemo(
+    () =>
+      Object.fromEntries(
+        joinRoomHistories.map((h) => [h.userId, h.photoURL])
+      ),
+    [joinRoomHistories]
+  );
+
   const selectableStoryPoints = STORY_POINTS.filter(
     (p) =>
       p !==
@@ -345,10 +353,19 @@ const Room = () => {
                         className={
                           isMyHistory
                             ? "inline-block ring-2 ring-blue-500 ring-offset-2 rounded-lg"
-                            : ""
+                            : "inline-block"
                         }
                       >
-                        <Card point={h.storyPoint} hide={h.hide} />
+                        <div className="relative">
+                          <Card point={h.storyPoint} hide={h.hide} />
+                          {photoUrlByUserId[h.userId] && (
+                            <img
+                              className="absolute -bottom-2 -right-2 w-6 h-6 rounded-full border-2 border-white shadow-md"
+                              src={photoUrlByUserId[h.userId]}
+                              alt={h.userName}
+                            />
+                          )}
+                        </div>
                       </div>
                       <p className="mt-1 text-xs break-words">
                         {isMyHistory ? (
@@ -376,18 +393,18 @@ const Room = () => {
 
                   {showResetConfirm ? (
                     <div className="flex items-center gap-2">
-                      <span className="text-sm text-gray-600 font-medium">リセットしますか？</span>
+                      <span className="text-sm text-gray-600 font-medium">Reset?</span>
                       <button
                         className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded text-sm"
                         onClick={handleResetConfirm}
                       >
-                        リセット
+                        Reset
                       </button>
                       <button
                         className="bg-white hover:bg-gray-200 text-black font-bold py-2 px-4 rounded text-sm border-gray-400 border-2"
                         onClick={handleResetCancel}
                       >
-                        キャンセル
+                        Cancel
                       </button>
                     </div>
                   ) : (
