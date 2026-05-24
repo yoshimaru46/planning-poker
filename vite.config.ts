@@ -9,7 +9,6 @@ export default defineConfig({
         manualChunks: {
           react: ["react", "react-dom"],
           firebase: ["firebase/app", "firebase/auth", "firebase/firestore", "firebase/analytics"],
-          dnd: ["react-dnd", "react-dnd-html5-backend"],
           router: ["react-router-dom"],
         },
       },
